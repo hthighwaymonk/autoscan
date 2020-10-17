@@ -93,6 +93,7 @@ func (d daemon) startAutoSync() error {
 	qos := 0
 	opts := MQTT.NewClientOptions()
 	opts.AddBroker(d.broker)
+	opts.SetConnectTimeout(15 * time.Second)
 	opts.SetAutoReconnect(true)
 	opts.SetResumeSubs(true)
 	opts.SetCleanSession(true)
