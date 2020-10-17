@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudbox/autoscan/triggers/minio"
+	"gopkg.in/yaml.v2"
 	"io"
 	"net/http"
 	"os"
@@ -10,11 +12,6 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-	"github.com/natefinch/lumberjack"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v2"
-
 	"github.com/cloudbox/autoscan"
 	"github.com/cloudbox/autoscan/processor"
 	"github.com/cloudbox/autoscan/targets/emby"
@@ -25,6 +22,9 @@ import (
 	"github.com/cloudbox/autoscan/triggers/lidarr"
 	"github.com/cloudbox/autoscan/triggers/radarr"
 	"github.com/cloudbox/autoscan/triggers/sonarr"
+	"github.com/natefinch/lumberjack"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type config struct {
@@ -42,6 +42,7 @@ type config struct {
 	// autoscan.HTTPTrigger
 	Triggers struct {
 		Bernard []bernard.Config `yaml:"bernard"`
+		Minio []minio.Config `yaml:"minio"`
 		Inotify []inotify.Config `yaml:"inotify"`
 		Lidarr  []lidarr.Config  `yaml:"lidarr"`
 		Radarr  []radarr.Config  `yaml:"radarr"`
@@ -200,6 +201,18 @@ func main() {
 		go trigger(proc.Add)
 	}
 
+	for _, t := range c.Triggers.Minio {
+		trigger, err := minio.New(t)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Str("trigger", "minio").
+				Msg("Failed initialising trigger")
+		}
+
+		go trigger(proc.Add)
+	}
+
 	for _, t := range c.Triggers.Inotify {
 		trigger, err := inotify.New(t)
 		if err != nil {
@@ -263,6 +276,7 @@ func main() {
 
 	log.Info().
 		Int("bernard", len(c.Triggers.Bernard)).
+		Int("minio", len(c.Triggers.Minio)).
 		Int("inotify", len(c.Triggers.Inotify)).
 		Int("lidarr", len(c.Triggers.Lidarr)).
 		Int("sonarr", len(c.Triggers.Sonarr)).
