@@ -144,8 +144,8 @@ func (d daemon) startAutoSync() error {
 		}
 
 		// process event details
-		eventDirectory := filepath.Dir(event.Path)
-		rewritten := filepath.Clean(d.rewriter(eventDirectory))
+		eventDirectory := filepath.Clean(filepath.Dir(event.Path))
+		rewritten := d.rewriter(eventDirectory)
 		if !d.allowed(rewritten) {
 			// path is not allowed
 			return
@@ -167,10 +167,9 @@ func (d daemon) startAutoSync() error {
 		}
 
 		d.log.Info().
-			Str("path", rewritten).
+			Str("path", eventDirectory).
 			Str("type", event.Type).
 			Msg("Scan moved to processor")
-
 	})
 
 	client := MQTT.NewClient(opts)
