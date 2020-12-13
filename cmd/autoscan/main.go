@@ -31,6 +31,7 @@ type config struct {
 	// General configuration
 	Port       int           `yaml:"port"`
 	MinimumAge time.Duration `yaml:"minimum-age"`
+	ProcWait   time.Duration `yaml:"process-wait-time"`
 	Anchors    []string      `yaml:"anchors"`
 
 	// Authentication for autoscan.HTTPTrigger
@@ -334,8 +335,8 @@ func main() {
 		err = proc.Process(targets)
 		switch {
 		case err == nil:
-			// Sleep 5 seconds between successful requests to reduce the load on targets.
-			time.Sleep(5 * time.Second)
+			// Sleep for x seconds, set by ProcWait, between successful requests to reduce the load on targets.
+			time.Sleep(ProcWait * time.Second)
 
 		case errors.Is(err, autoscan.ErrNoScans):
 			// No scans currently available, let's wait a couple of seconds
